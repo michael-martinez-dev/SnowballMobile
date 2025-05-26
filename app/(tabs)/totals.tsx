@@ -1,9 +1,10 @@
 import { Text, View, StyleSheet } from "react-native";
-import { useFile } from "@/src/properties/fileContext";
+// Removed useFile as it's no longer needed
 import TotalsDisplay from "@/src/components/totalsDisplay";
 
 export default function TotalsScreen() {
-  const { selectedFile } = useFile();
+  // selectedFile is no longer needed here as TotalsDisplay handles its own data fetching
+  // based on signedIn state from usePocketbase, which it uses internally.
 
   return (
     <View style={styles.container}>
@@ -17,19 +18,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#25292e",
-    justifyContent: "flex-start",
+    // justifyContent: "flex-start", // TotalsDisplay will center its content if not signed in
     alignItems: "center",
+    paddingTop: 20, // Added padding to give space from top
   },
-  text: {
-    color: "white",
-    fontSize: 24,
-    paddingTop: 20,
-  },
+  // text style was not used, removed
   title: {
     color: "white",
     fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 8,
-    marginTop: 20,
+    marginBottom: 20, // Increased margin for better separation
+    // marginTop: 20, // This is handled by paddingTop in container now
   },
 });

@@ -60,7 +60,8 @@
       },
       "eas": {
         "projectId": "9fd171a1-fe97-4375-86d1-d7fb2e7e77c3"
-      }
+      },
+      "pocketbaseUrl": "http://10.0.0.35:8090"
     }
   }
 }

@@ -4,7 +4,7 @@ export type SumResult = {
 };
 
 export type DebtRecord = {
-  id: number;
+  id: string;
   name: string;
   debt_type: string;
   total: number;
@@ -12,6 +12,7 @@ export type DebtRecord = {
   monthly_actual: number;
   interest: number;
   due_day: string;
+  user?: string;
 };
 
 export type QueryResult = (SumResult | DebtRecord)[];

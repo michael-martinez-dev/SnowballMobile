@@ -6,133 +6,117 @@ import {
   Text,
   ActivityIndicator,
   StyleSheet,
-  Modal,
   TouchableOpacity,
-  Pressable,
   RefreshControl,
 } from "react-native";
-import { useFile } from "../properties/fileContext";
+import { usePocketbase } from "../properties/pocketbaseContext"; // Adjusted path
 import {
-  openDatabase,
-  queryDatabase,
-  saveDatabase,
-  updateDatabase,
-} from "../services/databaseService";
-import { DebtRecord, QueryResult } from "../types/database";
-import { formatter } from "../properties/utils";
+  getAllDebtRecords,
+  updateDebtRecord,
+} from "../services/pocketbaseService"; // Adjusted path
+import { DebtRecord } from "../types/database"; // Adjusted path
+import { formatter } from "../properties/utils"; // Adjusted path
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DebtDetails from "./debtDetails";
 
 export default function DataDisplay() {
-  const { selectedFile } = useFile();
-  const [dbContent, setDbContent] = useState<QueryResult>([] as QueryResult);
+  const { pbSession, signedIn } = usePocketbase();
+  const [dbContent, setDbContent] = useState<DebtRecord[]>([]);
   const [loading, setLoading] = useState(false);
-  const [dbOpened, setDbOpened] = useState(false);
   const [showDebtDetails, setShowDebtDetails] = useState<boolean>(false);
-  const [debtDetails, setDebtDetails] = useState<DebtRecord>({} as DebtRecord);
+  const [selectedDebtRecord, setSelectedDebtRecord] =
+    useState<DebtRecord | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
+  const loadDebtRecords = useCallback(async () => {
+    if (!pbSession?.pb || !signedIn) {
+      setDbContent([]);
+      return;
+    }
+    console.log("Loading debt records...");
+    setLoading(true);
+    try {
+      const records = await getAllDebtRecords(pbSession.pb);
+      setDbContent(records);
+    } catch (error: any) {
+      console.error("Error loading debt records:", error);
+      Alert.alert(
+        "Error",
+        "Failed to load debt records: " + (error.message || "Unknown error"),
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [pbSession, signedIn]);
+
   useEffect(() => {
-    console.log("Change to selectedFile...");
-    loadDatabase();
-  }, [selectedFile]);
+    loadDebtRecords();
+  }, [loadDebtRecords]);
 
-  const loadDatabase = async () => {
-    console.log("Loading database...");
-    if (selectedFile) {
-      setLoading(true);
+  const handleSaveDebtRecord = async (debtDetailsToSave: DebtRecord) => {
+    if (!pbSession?.pb) {
+      Alert.alert("Error", "Pocketbase session not available.");
+      return;
+    }
+    if (Object.keys(debtDetailsToSave).length > 0 && debtDetailsToSave.id) {
+      console.log("Saving data...", debtDetailsToSave);
+      const { id, user, ...dataToUpdate } = debtDetailsToSave; // Exclude id and user
       try {
-        openDatabase(selectedFile.uri);
-        setDbOpened(true);
-
-        const result: QueryResult = queryDatabase(
-          "SELECT * FROM debt_records ORDER BY total * 1;",
+        await updateDebtRecord(pbSession.pb, id, dataToUpdate);
+        Alert.alert("Success", "Record updated successfully.");
+        loadDebtRecords(); // Refresh data
+      } catch (error: any) {
+        console.error("Error updating record:", error);
+        Alert.alert(
+          "Error",
+          "Failed to save debt record: " + (error.message || "Unknown error"),
         );
-
-        setDbContent(result);
-      } catch (err) {
-        console.error("Error opening database:", err);
-        Alert.alert("Error", "Error occured while opening the database");
-      } finally {
-        setLoading(false);
       }
     }
   };
 
-  const saveData = async (debtDetails: DebtRecord) => {
-    console.log("Save?");
-    if (Object.keys(debtDetails).length > 0) {
-      console.log("Saving data...");
-      console.log(debtDetails);
-      // TODO: add validation to DebtRecord
-      if (selectedFile) {
-        try {
-          openDatabase(selectedFile.uri);
-          setDbOpened(true);
-
-          updateDatabase(`
-            UPDATE debt_records
-            SET total = '${debtDetails.total}',
-                monthly_min = '${debtDetails.monthly_min}',
-                monthly_actual = '${debtDetails.monthly_actual}',
-                interest = '${debtDetails.interest}',
-                due_day = '${debtDetails.due_day}'
-            WHERE id = ${debtDetails.id};
-          `);
-          if (selectedFile?.localPath && selectedFile?.uri) {
-            const success = saveDatabase(
-              selectedFile.uri,
-              selectedFile.localPath,
-            );
-            if (success) {
-              Alert.alert("Success", "Database exported successfully.");
-            } else {
-              Alert.alert("Error", "No valid file paths found to export.");
-            }
-          }
-        } catch (err) {
-          console.error("Error opening database:", err);
-          Alert.alert("Error", "Error occured while opening the database");
-        }
-      }
+  const onPressHandler = (debtItem?: DebtRecord) => {
+    if (debtItem) {
+      setSelectedDebtRecord(debtItem);
     }
-    loadDatabase();
-  };
-
-  const onPressHandler = () => {
     setShowDebtDetails(!showDebtDetails);
   };
 
   const onRefresh = useCallback(async () => {
     console.log("Refreshing...");
     setRefreshing(true);
-    await loadDatabase();
+    await loadDebtRecords();
     setRefreshing(false);
-  }, [selectedFile]);
+  }, [loadDebtRecords]);
 
-  if (!selectedFile) {
+  if (!signedIn) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text style={{ color: "white" }}>Please select a SQLite file.</Text>
+      <View style={styles.centeredMessageContainer}>
+        <Text style={styles.infoText}>Please sign in to view your debts.</Text>
       </View>
     );
   }
 
-  if (!dbOpened) {
+  if (loading && !refreshing && dbContent.length === 0) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text style={{ color: "white" }}>Database is not opened.</Text>
+      <View style={styles.centeredMessageContainer}>
+        <ActivityIndicator size="large" color="#fff" />
       </View>
     );
-  }
-
-  if (loading) {
-    return <ActivityIndicator size="large" />;
   }
 
   return (
     <>
-      <ScrollView contentContainerStyle={styles.contentContainer}>
+      <ScrollView
+        contentContainerStyle={styles.contentContainer}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#fff"
+          />
+        }
+      >
         <View style={styles.debtRow}>
           <Text style={[styles.debtText, styles.header, styles.name]}>
             Name
@@ -144,46 +128,44 @@ export default function DataDisplay() {
             Monthly
           </Text>
         </View>
-        {dbContent.length === 0 ? (
-          <Text style={styles.infoText}>No data found.</Text>
+        {dbContent.length === 0 && !loading ? (
+          <Text style={styles.infoText}>No debt records found.</Text>
         ) : (
-          dbContent.map((item, index) => {
-            if ("id" in item) {
-              const name = item.name;
-              const total = formatter.format(item.total);
-              const monthlyMin = formatter.format(item.monthly_min);
-              const monthlyActual = formatter.format(item.monthly_actual);
+          dbContent.map((item) => {
+            // item is already DebtRecord
+            const name = item.name;
+            const total = formatter.format(item.total);
+            const monthlyMin = formatter.format(item.monthly_min);
+            const monthlyActual = formatter.format(item.monthly_actual);
 
-              return (
-                <View key={index} style={styles.debtRow}>
-                  <TouchableOpacity
-                    style={styles.name}
-                    onPress={() => {
-                      onPressHandler();
-                      setDebtDetails(item);
-                    }}
-                  >
-                    <Text style={styles.debtText}>{name}</Text>
-                  </TouchableOpacity>
-                  <Text style={[styles.debtText, styles.amount]}>{total}</Text>
-                  <Text style={[styles.debtText, styles.payment]}>
-                    {monthlyMin}
-                    {monthlyMin !== monthlyActual ? `/ ${monthlyActual}` : ""}
-                  </Text>
-                </View>
-              );
-            }
+            return (
+              <View key={item.id} style={styles.debtRow}>
+                <TouchableOpacity
+                  style={styles.name}
+                  onPress={() => onPressHandler(item)}
+                >
+                  <Text style={styles.debtText}>{name}</Text>
+                </TouchableOpacity>
+                <Text style={[styles.debtText, styles.amount]}>{total}</Text>
+                <Text style={[styles.debtText, styles.payment]}>
+                  {monthlyMin}
+                  {monthlyMin !== monthlyActual ? `/ ${monthlyActual}` : ""}
+                </Text>
+              </View>
+            );
           })
         )}
-        <DebtDetails
-          showDebtDetails={showDebtDetails}
-          debtDetails={debtDetails}
-          onPressHandler={onPressHandler}
-          saveDebt={saveData}
-        />
+        {selectedDebtRecord && (
+          <DebtDetails
+            showDebtDetails={showDebtDetails}
+            debtDetails={selectedDebtRecord}
+            onPressHandler={() => onPressHandler()} // To close
+            saveDebt={handleSaveDebtRecord}
+          />
+        )}
       </ScrollView>
       <View style={styles.refreshContainer}>
-        <TouchableOpacity onPress={loadDatabase}>
+        <TouchableOpacity onPress={loadDebtRecords}>
           <Ionicons name="refresh" size={28} color="white" />
         </TouchableOpacity>
       </View>
@@ -192,9 +174,17 @@ export default function DataDisplay() {
 }
 
 const styles = StyleSheet.create({
+  centeredMessageContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#25292e",
+  },
   infoText: {
     color: "white",
     fontSize: 16,
+    textAlign: "center",
+    marginTop: 20,
   },
   contentContainer: {
     flexGrow: 1,
