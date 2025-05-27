@@ -12,6 +12,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { DebtRecord } from "../types/database";
 import { useState, useEffect } from "react";
 import EditableField from "./editableField";
+import useEffectAfterMount from "../utils/helpers";
 
 type DataDisplayProps = {
   showDebtDetails: boolean;
@@ -24,13 +25,13 @@ export default function DebtDetails(props: DataDisplayProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [debt, setDebt] = useState<DebtRecord | null>(null);
 
-  useEffect(() => {
+  useEffectAfterMount(() => {
     if (props.showDebtDetails && props.debtDetails) {
       setDebt({ ...props.debtDetails });
     }
   }, [props.showDebtDetails, props.debtDetails]);
 
-  useEffect(() => {
+  useEffectAfterMount(() => {
     console.log("Debt change...");
     if (debt !== null) {
       props.saveDebt(debt);

@@ -62,6 +62,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     paddingHorizontal: 20,
+    marginBottom: 50,
   },
   authToggleContainer: {
     marginTop: 20,
@@ -74,7 +75,3 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
-// Ensure Alert is imported from react-native if not already
-// import { Alert } from "react-native";
-// This might require adding Alert to the import statement at the top of the file:
-// import { Text, View, StyleSheet, ScrollView, Button, Alert } from "react-native";
