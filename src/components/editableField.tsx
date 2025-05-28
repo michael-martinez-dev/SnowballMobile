@@ -20,65 +20,27 @@ export default function EditableField({
   const [input, setInput] = useState("");
 
   useEffect(() => {
-    console.log("Using effect...");
     if (!isEditing && value !== undefined) {
-      console.log("and setting input");
       setInput(value.toString());
     }
-    console.log(
-      "State | input=",
-      input,
-      " value=",
-      value,
-      "editing? ",
-      isEditing,
-    );
   }, [value, isEditing]);
 
   const handleChange = (text: string) => {
-    console.log("Handling change...");
     const cleaned = text.replace(/[^0-9.]/g, "");
     const parts = cleaned.split(".");
     if (parts.length > 2) return;
     setInput(cleaned);
-    console.log(
-      "State | input=",
-      input,
-      " value=",
-      value,
-      "editing? ",
-      isEditing,
-    );
   };
 
   const handleBlur = () => {
-    console.log("Handling blur...");
     const parsed = parseFloat(input);
     if (!isNaN(parsed)) {
-      console.log("it's a number! ", parsed);
       onChange(parsed);
     }
     setIsEditing(false);
-    console.log(
-      "State | input=",
-      input,
-      " value=",
-      value,
-      "editing? ",
-      isEditing,
-    );
   };
 
   const getDisplayValue = () => {
-    console.log("Getting display value...");
-    console.log(
-      "State | input=",
-      input,
-      " value=",
-      value,
-      "editing? ",
-      isEditing,
-    );
     if (isEditing) return input;
     return value !== undefined && !isNaN(value)
       ? format

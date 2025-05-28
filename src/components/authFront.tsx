@@ -7,6 +7,7 @@ type AuthFrontProps = {
 };
 
 export default function AuthFront(props: AuthFrontProps) {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
@@ -26,13 +27,13 @@ export default function AuthFront(props: AuthFrontProps) {
       return;
     }
     const data = {
+      name,
       email,
       password,
       passwordConfirm,
     };
     try {
       await pbSession.pb.collection("users").create(data);
-      Alert.alert("Success", "Signed up successfully! Please sign in.");
     } catch (error: any) {
       Alert.alert("Error", error.message);
     }
@@ -48,7 +49,6 @@ export default function AuthFront(props: AuthFrontProps) {
     try {
       await pbSession.pb.collection("users").authWithPassword(email, password);
       setSignedIn(true);
-      Alert.alert("Success", "Signed in successfully!");
     } catch (error: any) {
       Alert.alert("Error", error.message);
     }
@@ -61,11 +61,21 @@ export default function AuthFront(props: AuthFrontProps) {
         <Text style={styles.title}>Sign Up</Text>
         <TextInput
           style={styles.input}
+          placeholder="Name"
+          value={name}
+          onChangeText={setName}
+          keyboardType="default"
+          autoCapitalize="none"
+          placeholderTextColor="white"
+        />
+        <TextInput
+          style={styles.input}
           placeholder="Email"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
+          placeholderTextColor="white"
         />
         <TextInput
           style={styles.input}
@@ -73,6 +83,7 @@ export default function AuthFront(props: AuthFrontProps) {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
+          placeholderTextColor="white"
         />
         <TextInput
           style={styles.input}
@@ -80,6 +91,7 @@ export default function AuthFront(props: AuthFrontProps) {
           value={passwordConfirm}
           onChangeText={setPasswordConfirm}
           secureTextEntry
+          placeholderTextColor="white"
         />
         <Button
           title={loading ? "Signing Up..." : "Sign Up"}
@@ -99,6 +111,7 @@ export default function AuthFront(props: AuthFrontProps) {
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
+          placeholderTextColor="white"
         />
         <TextInput
           style={styles.input}
@@ -106,6 +119,7 @@ export default function AuthFront(props: AuthFrontProps) {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
+          placeholderTextColor="white"
         />
         <Button
           title={loading ? "Signing In..." : "Sign In"}
@@ -128,8 +142,10 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 20,
     textAlign: "center",
+    color: "white",
   },
   input: {
+    color: "white",
     height: 40,
     borderColor: "gray",
     borderWidth: 1,

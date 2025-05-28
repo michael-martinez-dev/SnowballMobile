@@ -24,7 +24,6 @@ export default function TotalsDisplay() {
       setMonthlySum(0);
       return;
     }
-    console.log("Loading totals...");
     setLoading(true);
     try {
       const { totalDebt, totalMonthlyActual } = await getDebtTotals(

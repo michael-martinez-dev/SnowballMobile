@@ -33,7 +33,6 @@ export default function DataDisplay() {
       setDbContent([]);
       return;
     }
-    console.log("Loading debt records...");
     setLoading(true);
     try {
       const records = await getAllDebtRecords(pbSession.pb);
@@ -59,11 +58,9 @@ export default function DataDisplay() {
       return;
     }
     if (Object.keys(debtDetailsToSave).length > 0 && debtDetailsToSave.id) {
-      console.log("Saving data...", debtDetailsToSave);
       const { id, user, ...dataToUpdate } = debtDetailsToSave; // Exclude id and user
       try {
         await updateDebtRecord(pbSession.pb, id, dataToUpdate);
-        Alert.alert("Success", "Record updated successfully.");
         loadDebtRecords(); // Refresh data
       } catch (error: any) {
         console.error("Error updating record:", error);
@@ -75,6 +72,8 @@ export default function DataDisplay() {
     }
   };
 
+  const addDebtRecord = () => {};
+
   const onPressHandler = (debtItem?: DebtRecord) => {
     if (debtItem) {
       setSelectedDebtRecord(debtItem);
@@ -83,7 +82,6 @@ export default function DataDisplay() {
   };
 
   const onRefresh = useCallback(async () => {
-    console.log("Refreshing...");
     setRefreshing(true);
     await loadDebtRecords();
     setRefreshing(false);
@@ -164,11 +162,6 @@ export default function DataDisplay() {
           />
         )}
       </ScrollView>
-      <View style={styles.refreshContainer}>
-        <TouchableOpacity onPress={loadDebtRecords}>
-          <Ionicons name="refresh" size={28} color="white" />
-        </TouchableOpacity>
-      </View>
     </>
   );
 }
@@ -220,10 +213,5 @@ const styles = StyleSheet.create({
   payment: {
     flex: 1,
     textAlign: "right",
-  },
-  refreshContainer: {
-    paddingVertical: 4,
-    alignItems: "center",
-    backgroundColor: "#25292e",
   },
 });

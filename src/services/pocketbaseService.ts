@@ -42,8 +42,6 @@ export async function getAllDebtRecords(pb: PocketBase): Promise<DebtRecord[]> {
         filter: `user = "${userId}"`,
         sort: "-total",
       });
-    console.log("records:");
-    console.log(records);
     return records.map(mapRecordToDebtRecord);
   } catch (error) {
     console.error("Error fetching debt records:", error);

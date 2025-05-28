@@ -2,10 +2,7 @@ import { useState } from "react";
 import { Text, View, StyleSheet, Button, Alert } from "react-native"; // Removed ScrollView
 import DataDisplay from "@/src/components/dataDisplay";
 import { usePocketbase } from "@/src/properties/pocketbaseContext";
-// AsyncStorage is not used directly here anymore, can be removed if not needed for other functionality
 import AuthFront from "@/src/components/authFront";
-
-// const DATABASE_FILE_INFO = "DatabaseFileInfo"; // No longer used
 
 export default function Index() {
   const { signedIn, setSignedIn, pbSession, setPbSession } = usePocketbase();
@@ -16,9 +13,6 @@ export default function Index() {
       pbSession.pb.authStore.clear();
     }
     setSignedIn(false);
-    // Optionally clear other states like pbSession if needed
-    // setPbSession(null);
-    Alert.alert("Logged Out", "You have been successfully logged out.");
   };
 
   return (
